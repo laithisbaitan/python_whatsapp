@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bulk Sender</title>
+</head>
+<body>
+    <h1>WhatsApp Bulk Message Sender</h1>
+    <form method="POST" enctype="multipart/form-data">
+        <label for="template">Select Template:</label><br>
+        <select id="template" name="template" required>
+            {% for template in templates %}
+                <option value="{{ template.name }}">
+                    {{ template.name }} 
+                    {% if template.param_count > 0 %}
+                        ({{ template.param_count }} params)
+                    {% else %}
+                        (No parameters)
+                    {% endif %}
+                </option>
+            {% endfor %}
+        </select><br><br>
+
+        <label for="csv_file">Upload CSV File:</label><br>
+        <input type="file" id="csv_file" name="csv_file" accept=".csv" required><br><br>
+
+        <button type="submit">Send Messages</button>
+    </form>
+
+    {% if success %}
+        <h3 style="color: green;">{{ success }}</h3>
+    {% endif %}
+
+    {% if error %}
+        <h3 style="color: red;">Error: {{ error }}</h3>
+    {% endif %}
+
+    {% if errors %}
+        <h3>Errors:</h3>
+        <ul>
+            {% for err in errors %}
+                <li>Phone Number: {{ err.phone_number }} - Error: {{ err.error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>
