@@ -4,14 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WhatsApp Bulk Sender</title>
+    <style>
+        #template-preview {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        .placeholder {
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
 </head>
 <body>
     <h1>WhatsApp Bulk Message Sender</h1>
     <form method="POST" enctype="multipart/form-data">
         <label for="template">Select Template:</label><br>
-        <select id="template" name="template" required>
+        <select id="template" name="template" required onchange="updateTemplatePreview()">
             {% for template in templates %}
-                <option value="{{ template.name }}">
+                <option value="{{ template.name }}" data-body="{{ template.body_text }}" data-params="{{ template.param_count }}">
                     {{ template.name }} 
                     {% if template.param_count > 0 %}
                         ({{ template.param_count }} params)
@@ -21,6 +33,11 @@
                 </option>
             {% endfor %}
         </select><br><br>
+
+        <div id="template-preview">
+            <h3>Template Preview:</h3>
+            <p>Select a template to see the preview.</p>
+        </div>
 
         <label for="csv_file">Upload CSV File:</label><br>
         <input type="file" id="csv_file" name="csv_file" accept=".csv" required><br><br>
@@ -44,5 +61,26 @@
             {% endfor %}
         </ul>
     {% endif %}
+
+    <script>
+        function updateTemplatePreview() {
+            const templateDropdown = document.getElementById('template');
+            const selectedOption = templateDropdown.options[templateDropdown.selectedIndex];
+            const bodyText = selectedOption.getAttribute('data-body');
+            const paramCount = selectedOption.getAttribute('data-params');
+            
+            const previewDiv = document.getElementById('template-preview');
+            if (bodyText) {
+                let previewHtml = `<p>${bodyText.replace(/\\{\\{\\d+\\}\\}/g, '<span class="placeholder">$&</span>')}</p>`;
+                previewHtml += `<p>Number of parameters: ${paramCount}</p>`;
+                previewDiv.innerHTML = `<h3>Template Preview:</h3>${previewHtml}`;
+            } else {
+                previewDiv.innerHTML = `<h3>Template Preview:</h3><p>No preview available for this template.</p>`;
+            }
+        }
+
+        // Initialize preview for the first selected template
+        document.addEventListener('DOMContentLoaded', updateTemplatePreview);
+    </script>
 </body>
 </html>

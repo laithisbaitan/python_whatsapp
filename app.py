@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import os
 import requests
 import pandas as pd
-
+import json
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Needed for session management
@@ -44,7 +44,7 @@ def index():
 
         try:
             # Read CSV file
-            data = pd.read_csv(csv_file)
+            data = pd.read_csv(csv_file, dtype=str)
 
             # Get template details
             template_details = next(
@@ -89,27 +89,39 @@ def index():
 
 
 # Fetch templates from WhatsApp API
+# Fetch templates from WhatsApp API
 def fetch_templates(access_token, whatsapp_business_id):
     url = f"https://graph.facebook.com/v21.0/{whatsapp_business_id}/message_templates"
     headers = {"Authorization": f"Bearer {access_token}"}
     response = requests.get(url, headers=headers)
+    
     if response.status_code == 200:
         templates = response.json().get("data", [])
-        # Add a field for the number of parameters
+        
         for template in templates:
             components = template.get("components", [])
             if components:
-                body_component = next((c for c in components if c["type"] == "body"), {})
-                template["param_count"] = len(body_component.get("parameters", []))
+                # Find the body component
+                body_component = next((c for c in components if c["type"] == "BODY"), {})
+                body_text = body_component.get("text", "")
+                
+                # Count the placeholders (e.g., {{1}}, {{2}}, ...)
+                template["param_count"] = body_text.count("{{")
+                template["body_text"] = body_text  # Include body text for preview
             else:
-                template["param_count"] = 0  # No parameters
+                template["param_count"] = 0  # Default to 0 if no body component found
+                template["body_text"] = "No content available"
+        
         return templates
+
     return []
+
 
 
 
 # Send a message using the WhatsApp API
 def send_message(access_token, phone_number_id, phone_number, template_name, params):
+    print(params)
     url = f"https://graph.facebook.com/v21.0/{phone_number_id}/messages"
     headers = {
         "Authorization": f"Bearer {access_token}",
@@ -122,11 +134,15 @@ def send_message(access_token, phone_number_id, phone_number, template_name, par
         "template": {
             "name": template_name,
             "language": {"code": "en"},
-            "components": [{"type": "body", "parameters": params}],
+            "components": [
+                {"type": "body", 
+                 "parameters": params
+                 }],
         },
     }
-    return requests.post(url, headers=headers, json=payload)
-
+    response = requests.post(url, headers=headers, json=payload)
+    print(response.json())  # Debugging - View API response
+    return response
 
 if __name__ == "__main__":
     app.run(debug=True)
