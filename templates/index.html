@@ -4,45 +4,190 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WhatsApp Bulk Sender</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        main {
+            max-width: 800px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        select, input, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #template-preview {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+
+        .placeholder {
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table th, table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #f1f1f1;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
 </head>
 <body>
-    <h1>WhatsApp Bulk Message Sender</h1>
-    <form method="POST" enctype="multipart/form-data">
-        <label for="template">Select Template:</label><br>
-        <select id="template" name="template" required>
-            {% for template in templates %}
-                <option value="{{ template.name }}">
-                    {{ template.name }} 
-                    {% if template.param_count > 0 %}
-                        ({{ template.param_count }} params)
-                    {% else %}
-                        (No parameters)
-                    {% endif %}
-                </option>
-            {% endfor %}
-        </select><br><br>
+    <header>
+        <h1>WhatsApp Bulk Message Sender</h1>
+    </header>
+    <main>
+        <form method="POST" enctype="multipart/form-data">
+            <label for="template">Select Template:</label>
+            <select id="template" name="template" required onchange="updateTemplatePreview()">
+                {% for template in templates %}
+                    <option value="{{ template.name }}" data-body="{{ template.body_text }}" data-params="{{ template.param_count }}">
+                        {{ template.name }} 
+                        {% if template.param_count > 0 %} ({{ template.param_count }} params) {% else %} (No parameters) {% endif %}
+                    </option>
+                {% endfor %}
+            </select>
 
-        <label for="csv_file">Upload CSV File:</label><br>
-        <input type="file" id="csv_file" name="csv_file" accept=".csv" required><br><br>
+            <div id="template-preview">
+                <h3>Template Preview:</h3>
+                <p>Select a template to see the preview.</p>
+            </div>
 
-        <button type="submit">Send Messages</button>
-    </form>
+            <label for="csv_file">Upload CSV File:</label>
+            <input type="file" id="csv_file" name="csv_file" accept=".csv" required>
 
-    {% if success %}
-        <h3 style="color: green;">{{ success }}</h3>
-    {% endif %}
+            <button type="submit">Send Messages</button>
+        </form>
 
-    {% if error %}
-        <h3 style="color: red;">Error: {{ error }}</h3>
-    {% endif %}
+        {% if success %}
+            <h3 class="success">{{ success }}</h3>
+        {% endif %}
 
-    {% if errors %}
-        <h3>Errors:</h3>
-        <ul>
-            {% for err in errors %}
-                <li>Phone Number: {{ err.phone_number }} - Error: {{ err.error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+        {% if error %}
+            <h3 class="error">Error: {{ error }}</h3>
+        {% endif %}
+
+        {% if errors %}
+            <h3>Errors:</h3>
+            <ul>
+                {% for err in errors %}
+                    <li>Phone Number: {{ err.phone_number }} - Error: {{ err.error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if results %}
+            <div id="results">
+                <h3>Message Sending Results:</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Phone Number</th>
+                            <th>Status</th>
+                            <th>Error (if any)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                            <tr>
+                                <td>{{ result.phone_number }}</td>
+                                <td class="{{ 'success' if result.status == 'success' else 'error' }}">
+                                    {{ result.status.capitalize() }}
+                                </td>
+                                <td>{{ result.error if result.status == 'failure' else 'N/A' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </main>
+    <script>
+        function updateTemplatePreview() {
+            const templateDropdown = document.getElementById('template');
+            const selectedOption = templateDropdown.options[templateDropdown.selectedIndex];
+            const bodyText = selectedOption.getAttribute('data-body');
+            const paramCount = selectedOption.getAttribute('data-params');
+            
+            const previewDiv = document.getElementById('template-preview');
+            if (bodyText) {
+                let previewHtml = `<p>${bodyText.replace(/\\{\\{\\d+\\}\\}/g, '<span class="placeholder">$&</span>')}</p>`;
+                previewHtml += `<p>Number of parameters: ${paramCount}</p>`;
+                previewDiv.innerHTML = `<h3>Template Preview:</h3>${previewHtml}`;
+            } else {
+                previewDiv.innerHTML = `<h3>Template Preview:</h3><p>No preview available for this template.</p>`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', updateTemplatePreview);
+    </script>
 </body>
 </html>
