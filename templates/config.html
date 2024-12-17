@@ -1,21 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configuration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        main {
+            max-width: 600px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>WhatsApp Business Configuration</h1>
-    <form method="POST">
-        <label>Access Token:</label>
-        <input type="text" name="access_token" required><br><br>
-        
-        <label>Phone Number ID:</label>
-        <input type="text" name="phone_number_id" required><br><br>
-        
-        <label>WhatsApp Business ID:</label>
-        <input type="text" name="whatsapp_business_id" required><br><br>
+    <main>
+        <h1>WhatsApp Business Configuration</h1>
+        <form method="POST">
+            <label for="access_token">Access Token:</label>
+            <input type="text" id="access_token" name="access_token" value="" required>
 
-        <button type="submit">Save Configuration</button>
-    </form>
+            <label for="phone_number_id">Phone Number ID:</label>
+            <input type="text" id="phone_number_id" name="phone_number_id" value="" required>
+
+            <label for="whatsapp_business_id">WhatsApp Business ID:</label>
+            <input type="text" id="whatsapp_business_id" name="whatsapp_business_id" value="" required>
+
+            <button type="submit">Save Configuration</button>
+        </form>
+    </main>
 </body>
 </html>
